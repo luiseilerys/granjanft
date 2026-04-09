@@ -4,39 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>CryptoCrop: Genesis - Economía y Drenaje</title>
-    <style>
-        *{box-sizing:border-box;user-select:none;}
-        body{font-family:'Segoe UI',system-ui;background:#1a3a1a;margin:0;padding:8px;color:#f5f5dc;}
-        .container{max-width:800px;margin:auto;background:#2d6a2d;border-radius:32px;padding:12px;box-shadow:0 10px 25px rgba(0,0,0,0.3);}
-        h1{font-size:1.5rem;margin:0;text-align:center;display:flex;justify-content:center;align-items:center;gap:6px;}
-        .stats-bar{display:flex;flex-wrap:wrap;justify-content:space-between;background:#1f4f1f;border-radius:40px;padding:5px 10px;margin-bottom:10px;font-size:0.7rem;gap:5px;}
-        .stat{background:#0f3b0f;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;}
-        canvas{display:block;margin:0 auto;background:#8b5a2b;border-radius:20px;cursor:pointer;width:100%;height:auto;box-shadow:0 4px 8px rgba(0,0,0,0.2);}
-        .tabs{display:flex;flex-wrap:wrap;gap:3px;margin:8px 0 5px;}
-        .tab-btn{background:#f3b33d;border:none;padding:5px 8px;border-radius:40px;font-weight:bold;cursor:pointer;flex:1;text-align:center;font-size:0.65rem;}
-        .tab-btn.active{background:#e09d2c;box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);}
-        .panel{background:#266326;border-radius:20px;padding:8px;margin-top:5px;border:1px solid #a9d67b;max-height:450px;overflow-y:auto;}
-        .panel.hidden{display:none;}
-        .grid{display:flex;flex-wrap:wrap;gap:6px;}
-        .card{background:#1e4620;border-radius:16px;padding:5px;text-align:center;min-width:65px;cursor:pointer;transition:0.05s linear;}
-        .card:active{transform:scale(0.96);}
-        button{background:#f3b33d;border:none;padding:4px 8px;border-radius:30px;font-weight:bold;cursor:pointer;font-size:0.65rem;}
-        progress{width:55px;height:5px;border-radius:10px;}
-        .tooltip{font-size:0.6rem;opacity:0.8;}
-        footer{text-align:center;font-size:0.55rem;margin-top:8px;}
-        .level-bar{background:#d4a373;border-radius:20px;height:10px;width:100%;margin:4px 0;}
-        .level-fill{background:#ffd966;border-radius:20px;height:100%;width:0%;}
-        .blink{animation:blink 1s step-start infinite;}
-        @keyframes blink{50%{opacity:0.5;}}
-        .legendary{background:radial-gradient(circle, #ffd700, #b8860b); color:#2c2c2c;}
-        .dungeon{background:#4a2a2a;}
-        .hidden{display:none;}
-        input{background:#3a6e3a;border:1px solid #a9d67b;border-radius:20px;padding:4px 8px;color:#f5f5dc;width:100px;}
-    </style>
+    <link rel="stylesheet" href="src/css/styles.css">
 </head>
 <body>
 <div class="container">
     <h1>🌾 CryptoCrop <span style="font-size:0.8rem;">Drenaje Total</span> 💸</h1>
+    <div id="platformIndicator" class="stat" style="position:absolute;top:10px;right:10px;font-size:0.6rem;background:#1f4f1f;padding:3px 8px;border-radius:20px;"></div>
     <div class="stats-bar">
         <div class="stat">⚡ <span id="energyVal">100</span>% <progress id="energyBar" value="100" max="100"></progress></div>
         <div class="stat">⭐ Lv.<span id="level">1</span> (<span id="xp">0</span>/<span id="nextXp">100</span>)</div>
@@ -113,10 +86,52 @@
     <footer>🔗 Sincronizado P2P | Día <span id="dayFooter">1</span> | Economía dinámica | Drenaje activo</footer>
 </div>
 
+<!-- Módulos ES6 para compatibilidad multi-plataforma -->
+<script type="module">
+    import { platform } from './src/js/platformAdapter.js';
+    import { syncManager } from './src/js/syncManager.js';
+    
+    // Exponer globalmente para código legacy
+    window.platform = platform;
+    window.syncManager = syncManager;
+    
+    // Mostrar indicador de plataforma
+    const indicator = document.getElementById('platformIndicator');
+    if (indicator) {
+        indicator.textContent = platform.isWebxdc ? '📱 Webxdc' : '🌐 Navegador';
+    }
+    
+    console.log('[App] Plataforma:', platform.isWebxdc ? 'Webxdc' : 'Navegador');
+    console.log('[App] ID Usuario:', platform.getUserId());
+    console.log('[App] Nombre:', platform.getUserName());
+</script>
+
 <script>
-    // webxdc mock
+    // webxdc mock - compatible con módulos ES6
     const webxdc = (typeof window.webxdc !== "undefined") ? window.webxdc : { sendUpdate: (obj) => console.log("mock", obj), setUpdateListener: (cb) => { window.mockCb = cb; }, selfAddr: () => "local_" + Math.random().toString(36).substr(2,6), selfName: () => "Granjero" };
     if(typeof window.webxdc === "undefined") window.webxdc = webxdc;
+    
+    // Usar syncManager si está disponible
+    let sharedState = {};
+    let localState = {};
+    
+    function getSharedState() {
+        return window.syncManager ? window.syncManager.getSharedState() : sharedState;
+    }
+    
+    function getLocalState() {
+        return window.syncManager ? window.syncManager.getLocalState() : localState;
+    }
+    
+    function broadcastShared(partial) {
+        if (window.syncManager) {
+            window.syncManager.broadcastShared(partial);
+        } else {
+            sharedState.version = (sharedState.version || 0) + 1;
+            Object.assign(sharedState, partial);
+            webxdc.sendUpdate({ payload:{ type:"SHARED", data:partial, version:sharedState.version }, description:"sync" });
+        }
+    }
 
     // DATOS
     const CROPS = { trigo:{emoji:"🌾",tiempoHoras:12,valorBase:6,precioSemilla:3,exp:10}, zanahoria:{emoji:"🥕",tiempoHoras:8,valorBase:5,precioSemilla:2,exp:8}, maiz:{emoji:"🌽",tiempoHoras:16,valorBase:8,precioSemilla:4,exp:12}, patata:{emoji:"🥔",tiempoHoras:10,valorBase:6,precioSemilla:3,exp:9}, tomate:{emoji:"🍅",tiempoHoras:14,valorBase:7,precioSemilla:4,exp:11}, fresa:{emoji:"🍓",tiempoHoras:6,valorBase:4,precioSemilla:5,exp:7}, arroz:{emoji:"🍚",tiempoHoras:18,valorBase:9,precioSemilla:5,exp:14}, cafe:{emoji:"☕",tiempoHoras:20,valorBase:12,precioSemilla:8,exp:18} };
