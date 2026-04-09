@@ -250,15 +250,119 @@
     // -------------------- FUNCIONES DE UI --------------------
     let canvas,ctx,selectedSeed=null;
     function renderFarm(){ if(!canvas) return; const size=localState.landSize, cellW=canvas.width/size, cellH=canvas.height/size; ctx.clearRect(0,0,canvas.width,canvas.height); for(let i=0;i<size;i++) for(let j=0;j<size;j++){ ctx.fillStyle="#8B5A2B"; ctx.fillRect(i*cellW,j*cellH,cellW-1,cellH-1); const crop=localState.crops.find(c=>c.x===i && c.y===j); if(crop){ const emoji=CROPS[crop.seedId].emoji; let color=crop.etapa==="brote"?"#a9d08e":crop.etapa==="crecimiento"?"#6aa84f":crop.etapa==="maduro"?"#f1c232":"#ffd966"; ctx.fillStyle=color; ctx.fillRect(i*cellW+2,j*cellH+2,cellW-4,cellH-4); ctx.font=`${cellW*0.5}px sans-serif`; ctx.fillStyle="#2c2c2c"; ctx.fillText(emoji,i*cellW+cellW*0.2,j*cellH+cellH*0.7); } else { ctx.fillStyle="#c27e3a"; ctx.fillRect(i*cellW+2,j*cellH+2,cellW-4,cellH-4); } } }
-    function updateUI(){ document.getElementById("energyBar").value=localState.energy; document.getElementById("energyVal").innerText=localState.energy; document.getElementById("coins").innerText=localState.coins; document.getElementById("bankCoins").innerText=localState.bankCoins; document.getElementById("weather").innerText=sharedState.climaGlobal; document.getElementById("season").innerText=sharedState.season; document.getElementById("level").innerText=localState.level; document.getElementById("xp").innerText=localState.xp; let nextXp=100*localState.level; document.getElementById("nextXp").innerText=nextXp; document.getElementById("xpBar").style.width=(localState.xp/nextXp*100)+"%"; document.getElementById("azadaDur").innerText=localState.tools.azada; document.getElementById("regaderaDur").innerText=localState.tools.regadera; document.getElementById("hozDur").innerText=localState.tools.hoz; let coop=sharedState.cooperativas.find(c=>c.id===localState.coopId); document.getElementById("coopName").innerText=coop?coop.nombre:"Ninguna"; document.getElementById("dailyBonus").innerHTML=(Date.now()-localState.lastDailyBonus<86400000)?"✅":"🎁"; let petName=PETS.find(p=>p.id===localState.pet)?.name||"Ninguna"; document.getElementById("petName").innerText=petName; let forecast=["soleado","lluvia","sequia","plaga","tormenta"][Math.floor(Math.random()*5)]; document.getElementById("forecast").innerHTML=`📅 Pronóstico 3 días: ${forecast}, ${["lluvia","soleado"][Math.floor(Math.random()*2)]}, ${["sequia","tormenta"][Math.floor(Math.random()*2)]}`; document.getElementById("moonEvent").innerHTML=sharedState.moonEvent?.active?"🌕 Luna llena":""; document.getElementById("tractorStatus").innerHTML=localState.tractor?"🚜 Tractor disponible":""; document.getElementById("day").innerText=sharedState.day; document.getElementById("dayFooter").innerText=sharedState.day; document.getElementById("streak").innerText=localState.dailyStreak; renderFarm(); updateSeedsUI(); updateInventoryUI(); updateAnimalsUI(); updateMarketUI(); updateVotesUI(); updateCraftUI(); updateMissionsUI(); updateAchievementsUI(); updateCoopUI(); updatePrestigeUI(); updateResearchUI(); updateSkillsUI(); updateMiningUI(); updateDungeonUI(); updateSpellsUI(); updateCookingUI(); updateGreenhouseUI(); updatePetsUI(); updateLegendaryUI(); updateFuturesUI(); updateTradeUI(); updateNPCQuests(); renderAchievementLedger(); updateDrainUI(); }
+    function safeGetElement(id) {
+        const el = document.getElementById(id);
+        if (!el) console.warn(`Elemento no encontrado: ${id}`);
+        return el;
+    }
+    
+    function updateUI(){
+        const energyBar = safeGetElement("energyBar");
+        const energyVal = safeGetElement("energyVal");
+        const coinsEl = safeGetElement("coins");
+        const bankCoinsEl = safeGetElement("bankCoins");
+        const weatherEl = safeGetElement("weather");
+        const seasonEl = safeGetElement("season");
+        const levelEl = safeGetElement("level");
+        const xpEl = safeGetElement("xp");
+        const nextXpEl = safeGetElement("nextXp");
+        const xpBar = safeGetElement("xpBar");
+        const azadaDur = safeGetElement("azadaDur");
+        const regaderaDur = safeGetElement("regaderaDur");
+        const hozDur = safeGetElement("hozDur");
+        const coopNameEl = safeGetElement("coopName");
+        const dailyBonusEl = safeGetElement("dailyBonus");
+        const petNameEl = safeGetElement("petName");
+        const forecastEl = safeGetElement("forecast");
+        const moonEventEl = safeGetElement("moonEvent");
+        const tractorStatusEl = safeGetElement("tractorStatus");
+        const dayEl = safeGetElement("day");
+        const dayFooterEl = safeGetElement("dayFooter");
+        const streakEl = safeGetElement("streak");
+        
+        if(energyBar) energyBar.value=localState.energy;
+        if(energyVal) energyVal.innerText=localState.energy;
+        if(coinsEl) coinsEl.innerText=localState.coins;
+        if(bankCoinsEl) bankCoinsEl.innerText=localState.bankCoins;
+        if(weatherEl) weatherEl.innerText=sharedState.climaGlobal;
+        if(seasonEl) seasonEl.innerText=sharedState.season;
+        if(levelEl) levelEl.innerText=localState.level;
+        if(xpEl) xpEl.innerText=localState.xp;
+        let nextXp=100*localState.level;
+        if(nextXpEl) nextXpEl.innerText=nextXp;
+        if(xpBar) xpBar.style.width=(localState.xp/nextXp*100)+"%";
+        if(azadaDur) azadaDur.innerText=localState.tools.azada;
+        if(regaderaDur) regaderaDur.innerText=localState.tools.regadera;
+        if(hozDur) hozDur.innerText=localState.tools.hoz;
+        let coop=sharedState.cooperativas.find(c=>c.id===localState.coopId);
+        if(coopNameEl) coopNameEl.innerText=coop?coop.nombre:"Ninguna";
+        if(dailyBonusEl) dailyBonusEl.innerHTML=(Date.now()-localState.lastDailyBonus<86400000)?"✅":"🎁";
+        let petName=PETS.find(p=>p.id===localState.pet)?.name||"Ninguna";
+        if(petNameEl) petNameEl.innerText=petName;
+        let forecast=["soleado","lluvia","sequia","plaga","tormenta"][Math.floor(Math.random()*5)];
+        if(forecastEl) forecastEl.innerHTML=`📅 Pronóstico 3 días: ${forecast}, ${["lluvia","soleado"][Math.floor(Math.random()*2)]}, ${["sequia","tormenta"][Math.floor(Math.random()*2)]}`;
+        if(moonEventEl) moonEventEl.innerHTML=sharedState.moonEvent?.active?"🌕 Luna llena":"";
+        if(tractorStatusEl) tractorStatusEl.innerHTML=localState.tractor?"🚜 Tractor disponible":"";
+        if(dayEl) dayEl.innerText=sharedState.day;
+        if(dayFooterEl) dayFooterEl.innerText=sharedState.day;
+        if(streakEl) streakEl.innerText=localState.dailyStreak;
+        
+        renderFarm();
+        updateSeedsUI();
+        updateInventoryUI();
+        updateAnimalsUI();
+        updateMarketUI();
+        updateVotesUI();
+        updateCraftUI();
+        updateMissionsUI();
+        updateAchievementsUI();
+        updateCoopUI();
+        updatePrestigeUI();
+        updateResearchUI();
+        updateSkillsUI();
+        updateMiningUI();
+        updateDungeonUI();
+        updateSpellsUI();
+        updateCookingUI();
+        updateGreenhouseUI();
+        updatePetsUI();
+        updateLegendaryUI();
+        updateFuturesUI();
+        updateTradeUI();
+        updateNPCQuests();
+        renderAchievementLedger();
+        updateDrainUI();
+    }
     function updateSeedsUI(){ let container=document.getElementById("seedsList"); if(!container) return; container.innerHTML=""; for(let [seed,qty] of Object.entries(localState.seeds)) if(qty>0){ let div=document.createElement("div"); div.className="card"; div.innerHTML=`<div class="emoji-big">${CROPS[seed]?.emoji||"🌱"}</div><div>${seed}</div><div>${qty}</div>`; div.onclick=()=>{ selectedSeed=seed; alert(`${seed} seleccionada`); }; container.appendChild(div); } let selectA=document.getElementById("cropA"), selectB=document.getElementById("cropB"); if(selectA && selectB){ let opts=localState.crops.filter(c=>c.etapa==="cosechable").map(c=>`<option value="${c.id}">${c.seedId}</option>`); selectA.innerHTML=opts.join(""); selectB.innerHTML=opts.join(""); } }
     function updateInventoryUI(){ let cropsDiv=document.getElementById("cropsList"); cropsDiv.innerHTML=""; for(let [item,qty] of Object.entries(localState.inventory)) if(CROPS[item] && qty>0){ let div=document.createElement("div"); div.className="card"; let price=sharedState.stockPrices[item]||CROPS[item].valorBase; div.innerHTML=`<div>${CROPS[item].emoji} ${item}</div><div>${qty}</div><button class="sellBtn" data-item="${item}" data-price="${price}">Vender (${price}$)</button>`; cropsDiv.appendChild(div); } document.querySelectorAll(".sellBtn").forEach(btn=>btn.onclick=()=>sellItem(btn.dataset.item,parseInt(btn.dataset.price))); let prodDiv=document.getElementById("animalProducts"); prodDiv.innerHTML=""; for(let p of ["huevo","leche","lana","huevo_pato","leche_cabra"]){ let qty=localState.inventory[p]||0; if(qty>0){ let price=sharedState.stockPrices[p]||{huevo:3,leche:5,lana:4,huevo_pato:4,leche_cabra:6}[p]; let div=document.createElement("div"); div.className="card"; let emoji={huevo:"🥚",leche:"🥛",lana:"🧶",huevo_pato:"🥚",leche_cabra:"🥛"}[p]; div.innerHTML=`<div>${emoji} ${p}</div><div>${qty}</div><button class="sellProduct" data-p="${p}" data-val="${price}">Vender (${price}$)</button>`; prodDiv.appendChild(div); } } document.querySelectorAll(".sellProduct").forEach(btn=>btn.onclick=()=>sellItem(btn.dataset.p,parseInt(btn.dataset.val))); let resDiv=document.getElementById("resourcesList"); resDiv.innerHTML=""; for(let r of ["madera","piedra","pasto","fertilizante"]){ let qty=localState.inventory[r]||0; if(qty>0) resDiv.innerHTML+=`<div class="card">${r} ${qty}</div>`; } let fishDiv=document.getElementById("fishList"); fishDiv.innerHTML=""; for(let f of ["pescado_comun","pescado_grande","pescado_dorado"]){ let qty=localState.inventory[f]||0; if(qty>0) fishDiv.innerHTML+=`<div class="card">🐟 ${f} ${qty}</div>`; } let honeyDiv=document.getElementById("honeyList"); honeyDiv.innerHTML=`<div class="card">🍯 Miel: ${localState.inventory.miel||0}</div>`; let invLegDiv=document.getElementById("invLegendaryCards"); invLegDiv.innerHTML=localState.legendaryCards.map(c=>{ let card=LEGENDARY_CARDS.find(l=>l.id===c); return `<div class="card legendary">${card?.emoji} ${card?.name}</div>`; }).join(""); let oreDiv=document.getElementById("oreList"); oreDiv.innerHTML=`<div>⛏️ Cobre: ${localState.ores.copper||0}</div><div>⚙️ Hierro: ${localState.ores.iron||0}</div><div>🌟 Oro: ${localState.ores.gold||0}</div>`; let foodDiv=document.getElementById("foodList"); foodDiv.innerHTML=""; for(let f of Object.keys(RECIPES_COOKING)){ let qty=localState.inventory[f]||0; if(qty>0) foodDiv.innerHTML+=`<div class="card">${RECIPES_COOKING[f].emoji} ${f} x${qty} <button class="eatFood" data-food="${f}">Comer</button></div>`; } document.querySelectorAll(".eatFood").forEach(btn=>btn.onclick=()=>eatFood(btn.dataset.food)); document.getElementById("essenceList").innerHTML=`🔮 Esencia mágica: ${localState.essence||0}`; }
     function updateAnimalsUI(){ let chickenDiv=document.getElementById("chickensList"), cowDiv=document.getElementById("cowsList"), sheepDiv=document.getElementById("sheepList"), ducksDiv=document.getElementById("ducksList"), goatsDiv=document.getElementById("goatsList"); if(!chickenDiv) return; chickenDiv.innerHTML=""; cowDiv.innerHTML=""; sheepDiv.innerHTML=""; ducksDiv.innerHTML=""; goatsDiv.innerHTML=""; localState.animals.forEach((a,idx)=>{ let card=document.createElement("div"); card.className="card"; card.innerHTML=`<div>${ANIMALS[a.type].emoji} ${a.type}</div><button class="feedBtn" data-idx="${idx}">🍃 Alimentar</button><button class="collectBtn" data-idx="${idx}">📦 Recoger</button>`; if(a.type==="chicken") chickenDiv.appendChild(card); else if(a.type==="cow") cowDiv.appendChild(card); else if(a.type==="sheep") sheepDiv.appendChild(card); else if(a.type==="duck") ducksDiv.appendChild(card); else if(a.type==="goat") goatsDiv.appendChild(card); }); document.querySelectorAll(".feedBtn").forEach(btn=>btn.onclick=()=>feedAnimal(parseInt(btn.dataset.idx))); document.querySelectorAll(".collectBtn").forEach(btn=>btn.onclick=()=>collectProduct(parseInt(btn.dataset.idx))); document.getElementById("breedAnimalsBtn").onclick=breedAnimals; }
     function updateMarketUI(){ let shopDiv=document.getElementById("shopSeeds"); shopDiv.innerHTML=""; for(let [seed,data] of Object.entries(CROPS)){ let price=Math.floor(data.precioSemilla*(sharedState.stockPrices[seed]||1)); let btn=document.createElement("button"); btn.innerText=`${data.emoji} ${seed} (${price}$)`; btn.onclick=()=>buySeed(seed); shopDiv.appendChild(btn); } let stockDiv=document.getElementById("stockPrices"); stockDiv.innerHTML="<b>Precios:</b> "+Object.entries(sharedState.stockPrices).slice(0,6).map(([k,v])=>`${k}:${v}$`).join(", "); let offersDiv=document.getElementById("offersList"); offersDiv.innerHTML=""; sharedState.mercado.forEach(o=>{ let div=document.createElement("div"); div.className="offer"; div.innerHTML=`<span>${o.fromUserId.slice(0,6)}: ${o.offerItem} x${o.cantidadOffer} ↔️ ${o.wantItem} x${o.cantidadWant}</span><button class="acceptOff" data-id="${o.id}">Aceptar</button>`; offersDiv.appendChild(div); }); document.querySelectorAll(".acceptOff").forEach(btn=>btn.onclick=()=>acceptOffer(parseInt(btn.dataset.id))); document.getElementById("newOfferBtn").onclick=()=>{ let offer=prompt("Ofreces (item:cantidad ej: trigo:2)"), want=prompt("Quieres (item:cantidad)"); if(offer && want){ let [offItem,offQ]=offer.split(":"); let [wantItem,wantQ]=want.split(":"); offQ=parseInt(offQ)||1; wantQ=parseInt(wantQ)||1; if(localState.inventory[offItem]>=offQ) publishOffer(offItem,wantItem,offQ,wantQ); else alert("No tienes suficiente"); } }; document.getElementById("rateUserBtn").onclick=()=>{ let uid=prompt("ID a calificar"); let positiva=confirm("¿Positiva?"); broadcastShared({ calificaciones:[...sharedState.calificaciones,{ from:localState.userId, to:uid, positiva, timestamp:Date.now() }] }); updateReputation(); }; let blackDiv=document.getElementById("blackMarket"); blackDiv.innerHTML=""; if(sharedState.blackMarket){ sharedState.blackMarket.forEach((item,idx)=>{ blackDiv.innerHTML+=`<div class="card">🖤 ${item.name} - ${item.price}$ <button class="buyBlack" data-idx="${idx}">Comprar</button></div>`; }); document.querySelectorAll(".buyBlack").forEach(btn=>btn.onclick=()=>buyBlackMarket(parseInt(btn.dataset.idx))); } document.getElementById("refreshBlackMarketBtn").onclick=generateBlackMarket; document.getElementById("manipulateMarketBtn").onclick=manipulateMarket; }
     function updateFuturesUI(){ let div=document.getElementById("futuresList"); div.innerHTML=""; for(let f of sharedState.futures){ if(f.userId===localState.userId){ div.innerHTML+=`<div class="future-item">📈 ${f.crop} ${f.direction==="up"?"⬆️":"⬇️"} - expira en ${Math.max(0,Math.round((f.expires-Date.now())/60000))} min</div>`; } } document.getElementById("buyFutureBtn").onclick=buyFuture; }
     function updateSkillsUI(){ let div=document.getElementById("skillsTree"); div.innerHTML=""; for(let s of SKILLS){ div.innerHTML+=`<div>📚 ${s} nivel ${localState.skills[s]} <button class="upSkill" data-skill="${s}">Mejorar (100$)</button></div>`; } document.querySelectorAll(".upSkill").forEach(btn=>btn.onclick=()=>upgradeSkill(btn.dataset.skill)); }
-    function updateMiningUI(){ document.getElementById("mineStatus").innerHTML=`Pico nivel ${localState.pickaxeLevel}`; document.getElementById("pickaxeLevel").innerText=`Nivel ${localState.pickaxeLevel}`; document.getElementById("mineBtn").onclick=mine; document.getElementById("upgradePickaxeBtn").onclick=upgradePickaxe; document.getElementById("miningDepth").innerHTML=`Profundidad: ${localState.pickaxeLevel}`; }
-    function updateDungeonUI(){ document.getElementById("dungeonStatus").innerHTML=`Espada nivel ${localState.swordLevel}`; document.getElementById("swordLevel").innerText=`Nivel ${localState.swordLevel}`; document.getElementById("dungeonBtn").onclick=exploreDungeon; document.getElementById("upgradeSwordBtn").onclick=upgradeSword; }
+    function updateMiningUI(){ 
+        const mineStatus = safeGetElement("mineStatus");
+        const pickaxeLevel = safeGetElement("pickaxeLevel");
+        const mineBtn = safeGetElement("mineBtn");
+        const upgradePickaxeBtn = safeGetElement("upgradePickaxeBtn");
+        const miningDepth = safeGetElement("miningDepth");
+        
+        if(mineStatus) mineStatus.innerHTML=`Pico nivel ${localState.pickaxeLevel}`;
+        if(pickaxeLevel) pickaxeLevel.innerText=`Nivel ${localState.pickaxeLevel}`;
+        if(mineBtn) mineBtn.onclick=mine;
+        if(upgradePickaxeBtn) upgradePickaxeBtn.onclick=upgradePickaxe;
+        if(miningDepth) miningDepth.innerHTML=`Profundidad: ${localState.pickaxeLevel}`;
+    }
+    function updateDungeonUI(){ 
+        const dungeonStatus = safeGetElement("dungeonStatus");
+        const swordLevel = safeGetElement("swordLevel");
+        const dungeonBtn = safeGetElement("dungeonBtn");
+        const upgradeSwordBtn = safeGetElement("upgradeSwordBtn");
+        
+        if(dungeonStatus) dungeonStatus.innerHTML=`Espada nivel ${localState.swordLevel}`;
+        if(swordLevel) swordLevel.innerText=`Nivel ${localState.swordLevel}`;
+        if(dungeonBtn) dungeonBtn.onclick=exploreDungeon;
+        if(upgradeSwordBtn) upgradeSwordBtn.onclick=upgradeSword;
+    }
     function updateSpellsUI(){ let div=document.getElementById("spellsList"); div.innerHTML=""; for(let s of SPELLS){ div.innerHTML+=`<div class="card">${s.emoji} ${s.name} (${s.cost} esencia) <button class="castSpell" data-id="${s.id}">Lanzar</button></div>`; } document.querySelectorAll(".castSpell").forEach(btn=>btn.onclick=()=>castSpell(btn.dataset.id)); }
     function updateCookingUI(){ let div=document.getElementById("recipesList"); div.innerHTML=""; for(let [rid,recipe] of Object.entries(RECIPES_COOKING)){ div.innerHTML+=`<div class="card">${recipe.emoji} ${rid} <button class="cookBtn" data-recipe="${rid}">Cocinar</button></div>`; } document.querySelectorAll(".cookBtn").forEach(btn=>btn.onclick=()=>cook(btn.dataset.recipe)); }
     function updateGreenhouseUI(){ let div=document.getElementById("greenhouseInfo"); if(localState.greenhouse){ div.innerHTML=`🌿 Invernadero nivel ${localState.greenhouseLevel} (+${localState.greenhouseLevel*25}% producción).`; }else{ div.innerHTML=`<button id="buyGreenhouseBtn">Construir invernadero (500$)</button>`; document.getElementById("buyGreenhouseBtn")?.addEventListener("click",buyGreenhouse); } document.getElementById("upgradeGreenhouseBtn")?.addEventListener("click",upgradeGreenhouse); }
@@ -281,9 +385,40 @@
     function updateCraftUI(){ let craftDiv=document.getElementById("craftRecipes"); craftDiv.innerHTML=""; let recipes={ "aspersor":{ cost:{ madera:3, piedra:2 } }, "espantapajaros":{ cost:{ madera:2, pasto:1 } }, "riego_goteo":{ cost:{ madera:5, piedra:3, fertilizante:2 } }, "establo_mejorado":{ cost:{ madera:8, piedra:5 } } }; for(let [item,receta] of Object.entries(recipes)){ let btn=document.createElement("button"); btn.innerText=`🔨 ${item} (${JSON.stringify(receta.cost)})`; btn.onclick=()=>{ for(let [res,cant] of Object.entries(receta.cost)) if((localState.inventory[res]||0)<cant){ alert(`Falta ${res}`); return; } for(let [res,cant] of Object.entries(receta.cost)) localState.inventory[res]-=cant; localState.mejoras.push(item); saveLocal(); updateUI(); alert(`${item} creado!`); }; craftDiv.appendChild(btn); } document.getElementById("ownedUpgrades").innerHTML=`Mejoras: ${localState.mejoras.join(", ")||"ninguna"}`; document.getElementById("buyBeehiveBtn").onclick=()=>{ if(localState.coins>=50){ localState.coins-=50; localState.beehives++; saveLocal(); updateUI(); } }; document.getElementById("buySprinklerBtn").onclick=()=>{ if(localState.coins>=100){ localState.coins-=100; localState.sprinklers++; saveLocal(); updateUI(); } }; document.getElementById("sprinklersCount").innerHTML=`Aspersores: ${localState.sprinklers}`; }
     function updateResearchUI(){ let div=document.getElementById("researchTree"); div.innerHTML=""; for(let r of RESEARCH){ let unlocked=localState.researchUnlocked.includes(r.id); div.innerHTML+=`<div class="research-node">${r.name} - ${r.effect} ${unlocked?"✅":`<button class="unlockRes" data-id="${r.id}">Desbloquear (${r.cost}$)</button>`}</div>`; } document.querySelectorAll(".unlockRes").forEach(btn=>btn.onclick=()=>unlockResearch(btn.dataset.id)); }
     function unlockResearch(resId){ let res=RESEARCH.find(r=>r.id===resId); if(!res || localState.researchUnlocked.includes(resId)) return; if(localState.coins<res.cost) return; localState.coins-=res.cost; localState.researchUnlocked.push(resId); saveLocal(); updateUI(); alert(`Investigación ${res.name} desbloqueada: ${res.effect}`); }
-    function updatePrestigeUI(){ document.getElementById("prestigeInfo").innerHTML=`Prestigio: ${localState.prestige} (+${localState.prestige*5}% producción)`; document.getElementById("prestigeBtn").onclick=prestige; let perksDiv=document.getElementById("prestigePerks"); perksDiv.innerHTML=`Ventajas: ${localState.prestige>0?"+5% producción por nivel":"Sin prestigio"}`; }
+    function updatePrestigeUI(){ 
+        const prestigeInfo = safeGetElement("prestigeInfo");
+        const prestigeBtn = safeGetElement("prestigeBtn");
+        const prestigePerks = safeGetElement("prestigePerks");
+        
+        if(prestigeInfo) prestigeInfo.innerHTML=`Prestigio: ${localState.prestige} (+${localState.prestige*5}% producción)`;
+        if(prestigeBtn) prestigeBtn.onclick=prestige;
+        if(prestigePerks) prestigePerks.innerHTML=`Ventajas: ${localState.prestige>0?"+5% producción por nivel":"Sin prestigio"}`;
+    }
     function prestige(){ if(localState.level<10){ alert("Nivel 10 necesario"); return; } localState.prestige++; localState.level=1; localState.xp=0; localState.coins=200; localState.energy=100; localState.crops=[]; localState.animals=[]; localState.seeds={ trigo:5,zanahoria:3,maiz:2,patata:2,tomate:1,fresa:0,arroz:0,cafe:0 }; localState.inventory={ trigo:0,zanahoria:0,maiz:0,patata:0,tomate:0,fresa:0,arroz:0,cafe:0, huevo:0,leche:0,lana:0,huevo_pato:0,leche_cabra:0, miel:0,pescado_comun:0,pescado_grande:0,pescado_dorado:0, madera:2,piedra:1,pasto:5,fertilizante:0, copper:0,iron:0,gold:0, essence:0 }; localState.mejoras=[]; localState.toolLevel=1; localState.tools={ azada:100, regadera:100, hoz:100 }; localState.landSize=2; localState.pet=null; localState.sprinklers=0; localState.bankCoins=0; localState.skills={ farming:1, animal:1, fishing:1, mining:1, combat:1 }; localState.pickaxeLevel=1; localState.swordLevel=1; localState.greenhouse=false; localState.greenhouseLevel=1; localState.tractor=false; saveLocal(); updateUI(); alert(`✨ Prestigio ${localState.prestige}! +${localState.prestige*5}% producción`); }
-    function updateDrainUI() { const luxuryDiv = document.getElementById("luxuryShop"); if (luxuryDiv) { luxuryDiv.innerHTML = ""; for (let item of LUXURY_ITEMS) { const owned = localState.cosmetics?.includes(item.id); luxuryDiv.innerHTML += `<div class="card">${item.emoji} ${item.name}<br>Precio: ${item.price}$<br>${owned ? "✅ Comprado" : `<button class="buyLuxury" data-id="${item.id}">Comprar</button>`}</div>`; } document.querySelectorAll(".buyLuxury").forEach(btn => btn.onclick = () => buyLuxuryItem(btn.dataset.id)); } document.getElementById("communityFund").innerText = sharedState.communityFund || 0; if (sharedState.auctionItem) { const remaining = Math.max(0, Math.ceil((sharedState.auctionItem.endTime - Date.now()) / 1000 / 60)); document.getElementById("auctionInfo").innerHTML = `Subasta: ${sharedState.auctionItem.item.name}<br>Puja más alta: ${sharedState.auctionItem.highestBid}$ por ${sharedState.auctionItem.highestBidder?.slice(0,6) || "nadie"}<br>Tiempo restante: ${remaining} min`; } else { document.getElementById("auctionInfo").innerHTML = "No hay subasta activa."; } }
+    function updateDrainUI() { 
+        const luxuryDiv = safeGetElement("luxuryShop");
+        if (luxuryDiv) { 
+            luxuryDiv.innerHTML = ""; 
+            for (let item of LUXURY_ITEMS) { 
+                const owned = localState.cosmetics?.includes(item.id); 
+                luxuryDiv.innerHTML += `<div class="card">${item.emoji} ${item.name}<br>Precio: ${item.price}$<br>${owned ? "✅ Comprado" : `<button class="buyLuxury" data-id="${item.id}">Comprar</button>`}</div>`; 
+            } 
+            document.querySelectorAll(".buyLuxury").forEach(btn => btn.onclick = () => buyLuxuryItem(btn.dataset.id)); 
+        } 
+        
+        const communityFundEl = safeGetElement("communityFund");
+        if(communityFundEl) communityFundEl.innerText = sharedState.communityFund || 0;
+        
+        const auctionInfoEl = safeGetElement("auctionInfo");
+        if(auctionInfoEl) {
+            if (sharedState.auctionItem) { 
+                const remaining = Math.max(0, Math.ceil((sharedState.auctionItem.endTime - Date.now()) / 1000 / 60)); 
+                auctionInfoEl.innerHTML = `Subasta: ${sharedState.auctionItem.item.name}<br>Puja más alta: ${sharedState.auctionItem.highestBid}$ por ${sharedState.auctionItem.highestBidder?.slice(0,6) || "nadie"}<br>Tiempo restante: ${remaining} min`; 
+            } else { 
+                auctionInfoEl.innerHTML = "No hay subasta activa."; 
+            }
+        }
+    }
     function generateBlackMarket(){ let items=[]; for(let i=0;i<3;i++){ let item={ ...BLACK_MARKET_ITEMS[Math.floor(Math.random()*BLACK_MARKET_ITEMS.length)], price:Math.floor(Math.random()*150)+50 }; items.push(item); } broadcastShared({ blackMarket:items }); }
     function buyBlackMarket(itemIdx){ let item=sharedState.blackMarket[itemIdx]; if(!item) return; if(localState.coins<item.price) return; localState.coins-=item.price; if(item.name==="Semilla mágica") localState.seeds.magica=(localState.seeds.magica||0)+1; else alert(`Compraste ${item.name}`); saveLocal(); updateUI(); }
     function weatherMachine(){ if(localState.coins<1000) return; localState.coins-=1000; let newWeather=["soleado","lluvia","sequia","plaga","tormenta"][Math.floor(Math.random()*5)]; broadcastShared({ climaGlobal:newWeather, climaExpira:Date.now()+7200000 }); alert(`Máquina climática: ${newWeather}`); }
