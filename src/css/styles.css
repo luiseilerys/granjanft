@@ -1,0 +1,502 @@
+/**
+ * Estilos principales de CryptoCrop: Genesis
+ * Organizados por componentes para mejor mantenimiento
+ */
+
+/* ============================================
+   VARIABLES CSS (Personalización fácil)
+   ============================================ */
+:root {
+    /* Colores principales */
+    --color-bg-primary: #1a3a1a;
+    --color-bg-secondary: #2d6a2d;
+    --color-bg-tertiary: #1f4f1f;
+    --color-bg-dark: #0f3b0f;
+    --color-bg-card: #1e4620;
+    --color-bg-panel: #266326;
+    
+    /* Colores de texto */
+    --color-text-primary: #f5f5dc;
+    --color-text-secondary: #a9d67b;
+    --color-text-dark: #2c2c2c;
+    
+    /* Colores de acento */
+    --color-accent: #f3b33d;
+    --color-accent-dark: #e09d2c;
+    --color-border: #a9d67b;
+    
+    /* Colores especiales */
+    --color-legendary: #ffd700;
+    --color-dungeon: #4a2a2a;
+    --color-level-bar: #d4a373;
+    --color-level-fill: #ffd966;
+    
+    /* Espaciado */
+    --spacing-xs: 3px;
+    --spacing-sm: 5px;
+    --spacing-md: 8px;
+    --spacing-lg: 12px;
+    --spacing-xl: 20px;
+    
+    /* Bordes redondeados */
+    --radius-sm: 16px;
+    --radius-md: 20px;
+    --radius-lg: 32px;
+    --radius-xl: 40px;
+    
+    /* Sombras */
+    --shadow-sm: 0 4px 8px rgba(0,0,0,0.2);
+    --shadow-md: 0 10px 25px rgba(0,0,0,0.3);
+    
+    /* Transiciones */
+    --transition-fast: 0.05s linear;
+    --transition-normal: 0.2s ease;
+}
+
+/* ============================================
+   RESET Y BASE
+   ============================================ */
+* {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--color-bg-primary);
+    margin: 0;
+    padding: var(--spacing-lg);
+    color: var(--color-text-primary);
+    line-height: 1.5;
+    overflow-x: hidden;
+}
+
+/* ============================================
+   CONTENEDOR PRINCIPAL
+   ============================================ */
+.container {
+    max-width: 800px;
+    margin: auto;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+}
+
+/* ============================================
+   ENCABEZADO
+   ============================================ */
+h1 {
+    font-size: 1.5rem;
+    margin: 0 0 var(--spacing-md) 0;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-text-primary);
+}
+
+h1 span {
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+h4 {
+    margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+    color: var(--color-accent);
+}
+
+/* ============================================
+   BARRA DE ESTADÍSTICAS
+   ============================================ */
+.stats-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    gap: var(--spacing-xs);
+}
+
+.stat {
+    background: var(--color-bg-dark);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-md);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+}
+
+/* ============================================
+   BARRA DE NIVEL
+   ============================================ */
+.level-bar {
+    background: var(--color-level-bar);
+    border-radius: var(--radius-md);
+    height: 10px;
+    width: 100%;
+    margin: var(--spacing-sm) 0;
+    overflow: hidden;
+}
+
+.level-fill {
+    background: var(--color-level-fill);
+    border-radius: var(--radius-md);
+    height: 100%;
+    transition: width var(--transition-normal);
+}
+
+/* ============================================
+   CANVAS DEL JUEGO
+   ============================================ */
+canvas {
+    display: block;
+    margin: 0 auto var(--spacing-md) auto;
+    background: #8b5a2b;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    width: 100%;
+    height: auto;
+    box-shadow: var(--shadow-sm);
+    touch-action: manipulation;
+}
+
+/* ============================================
+   PESTAÑAS DE NAVEGACIÓN
+   ============================================ */
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+}
+
+.tab-btn {
+    background: var(--color-accent);
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-xl);
+    font-weight: bold;
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+    font-size: 0.65rem;
+    min-width: 60px;
+    transition: background var(--transition-normal), transform var(--transition-fast);
+    color: var(--color-text-dark);
+}
+
+.tab-btn:hover {
+    background: var(--color-accent-dark);
+}
+
+.tab-btn:active {
+    transform: scale(0.96);
+}
+
+.tab-btn.active {
+    background: var(--color-accent-dark);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* ============================================
+   PANELES DE CONTENIDO
+   ============================================ */
+.panel {
+    background: var(--color-bg-panel);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    max-height: 450px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+}
+
+.panel.hidden {
+    display: none;
+}
+
+.panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.panel::-webkit-scrollbar-track {
+    background: var(--color-bg-dark);
+    border-radius: var(--radius-md);
+}
+
+.panel::-webkit-scrollbar-thumb {
+    background: var(--color-accent);
+    border-radius: var(--radius-md);
+}
+
+/* ============================================
+   GRID Y TARJETAS
+   ============================================ */
+.grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+.card {
+    background: var(--color-bg-card);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-sm);
+    text-align: center;
+    min-width: 65px;
+    cursor: pointer;
+    transition: transform var(--transition-fast), background var(--transition-normal);
+    border: 1px solid transparent;
+}
+
+.card:hover {
+    background: #2a5a30;
+    transform: translateY(-2px);
+}
+
+.card:active {
+    transform: scale(0.96);
+}
+
+.card.legendary {
+    background: radial-gradient(circle, var(--color-legendary), #b8860b);
+    color: var(--color-text-dark);
+    border: 2px solid var(--color-legendary);
+}
+
+.card.dungeon {
+    background: var(--color-dungeon);
+    border: 1px solid #8b4a4a;
+}
+
+/* ============================================
+   BOTONES
+   ============================================ */
+button {
+    background: var(--color-accent);
+    border: none;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-md);
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.65rem;
+    transition: background var(--transition-normal), transform var(--transition-fast);
+    color: var(--color-text-dark);
+    margin: var(--spacing-xs);
+}
+
+button:hover {
+    background: var(--color-accent-dark);
+}
+
+button:active {
+    transform: scale(0.96);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+button.blink {
+    animation: blink 1s step-start infinite;
+}
+
+@keyframes blink {
+    50% { opacity: 0.5; }
+}
+
+/* ============================================
+   ELEMENTOS DE FORMULARIO
+   ============================================ */
+input {
+    background: #3a6e3a;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    color: var(--color-text-primary);
+    width: 100px;
+    font-size: 0.65rem;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+}
+
+select {
+    background: #3a6e3a;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    color: var(--color-text-primary);
+    font-size: 0.65rem;
+    cursor: pointer;
+}
+
+progress {
+    width: 55px;
+    height: 5px;
+    border-radius: var(--radius-md);
+    appearance: none;
+}
+
+progress::-webkit-progress-bar {
+    background: var(--color-bg-dark);
+    border-radius: var(--radius-md);
+}
+
+progress::-webkit-progress-value {
+    background: var(--color-accent);
+    border-radius: var(--radius-md);
+}
+
+/* ============================================
+   TOOLTIPS Y TEXTO AYUDA
+   ============================================ */
+.tooltip {
+    font-size: 0.6rem;
+    opacity: 0.8;
+    margin: var(--spacing-xs) 0;
+}
+
+/* ============================================
+   PIE DE PÁGINA
+   ============================================ */
+footer {
+    text-align: center;
+    font-size: 0.55rem;
+    margin-top: var(--spacing-md);
+    opacity: 0.7;
+}
+
+/* ============================================
+   UTILIDADES
+   ============================================ */
+.hidden {
+    display: none !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-small {
+    font-size: 0.6rem;
+}
+
+/* ============================================
+   ELEMENTOS ESPECÍFICOS DEL JUEGO
+   ============================================ */
+.offer {
+    background: var(--color-bg-card);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    margin: var(--spacing-xs) 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.future-item,
+.trade-item,
+.mission-item,
+.quest-item,
+.vote-item,
+.achievement-item {
+    background: var(--color-bg-card);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    margin: var(--spacing-xs) 0;
+    font-size: 0.65rem;
+}
+
+.research-node {
+    background: var(--color-bg-card);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    margin: var(--spacing-xs) 0;
+    font-size: 0.65rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 600px) {
+    body {
+        padding: var(--spacing-sm);
+    }
+    
+    .container {
+        border-radius: var(--radius-md);
+        padding: var(--spacing-md);
+    }
+    
+    h1 {
+        font-size: 1.2rem;
+    }
+    
+    .stats-bar {
+        font-size: 0.6rem;
+    }
+    
+    .tab-btn {
+        font-size: 0.6rem;
+        padding: var(--spacing-xs) var(--spacing-xs);
+        min-width: 50px;
+    }
+    
+    canvas {
+        max-width: 100%;
+        height: auto;
+    }
+}
+
+/* ============================================
+   MODO OSCURO MEJORADO
+   ============================================ */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --shadow-sm: 0 4px 8px rgba(0,0,0,0.4);
+        --shadow-md: 0 10px 25px rgba(0,0,0,0.6);
+    }
+}
+
+/* ============================================
+   ACCESIBILIDAD
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+    .tabs, button, canvas {
+        display: none;
+    }
+    
+    body {
+        background: white;
+        color: black;
+    }
+    
+    .panel {
+        break-inside: avoid;
+    }
+}
