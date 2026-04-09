@@ -239,24 +239,76 @@
     function updateDay() { let now = Date.now(); let diffDays = Math.floor((now - sharedState.lastDayUpdate) / 86400000); if (diffDays >= 1) { sharedState.day += diffDays; sharedState.lastDayUpdate = now; broadcastShared({ day: sharedState.day, lastDayUpdate: sharedState.lastDayUpdate }); applyBankInterest(); applyWealthTax(); applyMaintenanceCosts(); startWeeklyAuction(); if (sharedState.day % 7 === 0) { let reward = Math.floor(Math.random() * 200) + 50; localState.coins += reward; alert(`🎉 Festival! +${reward}$`); } } finalizeAuction(); }
     // -------------------- LOGROS EN CADENA --------------------
     function recordAchievementOnChain(achId, achName) { const existing = sharedState.achievementLedger.find(entry => entry.userId === localState.userId && entry.achievementId === achId); if (existing) return; const newEntry = { userId: localState.userId, displayName: localState.displayName, achievementId: achId, achievementName: achName, timestamp: Date.now(), txId: Math.random().toString(36).substring(2, 10) }; broadcastShared({ achievementLedger: [...sharedState.achievementLedger, newEntry] }); }
-    function renderAchievementLedger() { const container = document.getElementById("achievementLedger"); if (!container) return; container.innerHTML = ""; const sorted = [...sharedState.achievementLedger].sort((a,b) => b.timestamp - a.timestamp); sorted.forEach(entry => { const date = new Date(entry.timestamp).toLocaleString(); container.innerHTML += `<div class="achievement-item">🏆 ${entry.displayName} desbloqueó "${entry.achievementName}" (${date}) - TX: ${entry.txId}</div>`; }); }
+    function renderAchievementLedger() { 
+        const container = safeGetElement("achievementLedger"); 
+        if (!container) return; 
+        container.innerHTML = ""; 
+        const sorted = [...sharedState.achievementLedger].sort((a,b) => b.timestamp - a.timestamp); 
+        sorted.forEach(entry => { 
+            const date = new Date(entry.timestamp).toLocaleString(); 
+            container.innerHTML += `<div class="achievement-item">🏆 ${entry.displayName} desbloqueó "${entry.achievementName}" (${date}) - TX: ${entry.txId}</div>`; 
+        }); 
+    }
     // -------------------- MODO ESPECTADOR --------------------
     let spectatorMode = false; let spectatorData = null;
     function shareFarmSnapshot() { const snapshot = { userId: localState.userId, displayName: localState.displayName, timestamp: Date.now(), landSize: localState.landSize, level: localState.level, prestige: localState.prestige, coins: localState.coins, crops: localState.crops.map(c => ({ seedId: c.seedId, etapa: c.etapa, x: c.x, y: c.y })), animals: localState.animals.map(a => ({ type: a.type, fedAt: a.fedAt })), legendaryCards: localState.legendaryCards }; let userSnapshots = sharedState.farmSnapshots.filter(s => s.userId === localState.userId); if (userSnapshots.length >= 5) { const oldest = userSnapshots.reduce((a,b) => a.timestamp < b.timestamp ? a : b); const newSnapshots = sharedState.farmSnapshots.filter(s => s !== oldest); broadcastShared({ farmSnapshots: [...newSnapshots, snapshot] }); } else { broadcastShared({ farmSnapshots: [...sharedState.farmSnapshots, snapshot] }); } alert("Instantánea compartida"); }
-    function viewFarmSnapshot(userId) { const snapshot = sharedState.farmSnapshots.find(s => s.userId === userId); if (!snapshot) { alert("No hay instantánea de ese jugador."); return; } spectatorMode = true; spectatorData = snapshot; renderSpectatorView(); document.getElementById("exitSpectatorBtn").classList.remove("hidden"); }
-    function renderSpectatorView() { if (!spectatorMode || !spectatorData) return; const container = document.getElementById("farmPanel"); container.innerHTML = `<div class="tooltip">👁️ Modo espectador - viendo granja de ${spectatorData.displayName}</div><div>🌾 Terreno: ${spectatorData.landSize}x${spectatorData.landSize}</div><div>⭐ Nivel: ${spectatorData.level} | 🏆 Prestigio: ${spectatorData.prestige}</div><div>💰 Monedas: ${spectatorData.coins}</div><div>🌱 Cultivos: ${spectatorData.crops.length}</div><div>🐄 Animales: ${spectatorData.animals.length}</div><div>✨ Cartas legendarias: ${spectatorData.legendaryCards.join(", ")}</div><canvas id="spectatorCanvas" width="400" height="400"></canvas><button id="exitSpectatorBtn">Salir del modo espectador</button>`; const specCanvas = document.getElementById("spectatorCanvas"); if (specCanvas) drawSpectatorFarm(specCanvas, spectatorData); document.getElementById("exitSpectatorBtn").onclick = exitSpectatorMode; }
+    function viewFarmSnapshot(userId) { 
+        const snapshot = sharedState.farmSnapshots.find(s => s.userId === userId); 
+        if (!snapshot) { alert("No hay instantánea de ese jugador."); return; } 
+        spectatorMode = true; 
+        spectatorData = snapshot; 
+        renderSpectatorView(); 
+        const exitBtn = safeGetElement("exitSpectatorBtn");
+        if(exitBtn) exitBtn.classList.remove("hidden"); 
+    }
+    function renderSpectatorView() { 
+        if (!spectatorMode || !spectatorData) return; 
+        const container = safeGetElement("farmPanel");
+        if(!container) return;
+        container.innerHTML = `<div class="tooltip">👁️ Modo espectador - viendo granja de ${spectatorData.displayName}</div><div>🌾 Terreno: ${spectatorData.landSize}x${spectatorData.landSize}</div><div>⭐ Nivel: ${spectatorData.level} | 🏆 Prestigio: ${spectatorData.prestige}</div><div>💰 Monedas: ${spectatorData.coins}</div><div>🌱 Cultivos: ${spectatorData.crops.length}</div><div>🐄 Animales: ${spectatorData.animals.length}</div><div>✨ Cartas legendarias: ${spectatorData.legendaryCards.join(", ")}</div><canvas id="spectatorCanvas" width="400" height="400"></canvas><button id="exitSpectatorBtn">Salir del modo espectador</button>`; 
+        const specCanvas = safeGetElement("spectatorCanvas"); 
+        if (specCanvas) drawSpectatorFarm(specCanvas, spectatorData); 
+        const exitBtn = safeGetElement("exitSpectatorBtn");
+        if(exitBtn) exitBtn.onclick = exitSpectatorMode; 
+    }
     function drawSpectatorFarm(canvas, data) { const ctx = canvas.getContext("2d"); const size = data.landSize; const cellW = canvas.width / size; const cellH = canvas.height / size; ctx.clearRect(0,0,canvas.width,canvas.height); for (let i=0;i<size;i++) for (let j=0;j<size;j++) { ctx.fillStyle="#8B5A2B"; ctx.fillRect(i*cellW,j*cellH,cellW-1,cellH-1); const crop = data.crops.find(c => c.x===i && c.y===j); if (crop) { const emoji = CROPS[crop.seedId]?.emoji || "🌱"; let color = "#6aa84f"; if (crop.etapa==="brote") color="#a9d08e"; else if (crop.etapa==="crecimiento") color="#6aa84f"; else if (crop.etapa==="maduro") color="#f1c232"; else if (crop.etapa==="cosechable") color="#ffd966"; ctx.fillStyle=color; ctx.fillRect(i*cellW+2,j*cellH+2,cellW-4,cellH-4); ctx.font=`${cellW*0.5}px sans-serif`; ctx.fillStyle="#2c2c2c"; ctx.fillText(emoji,i*cellW+cellW*0.2,j*cellH+cellH*0.7); } else { ctx.fillStyle="#c27e3a"; ctx.fillRect(i*cellW+2,j*cellH+2,cellW-4,cellH-4); } } }
     function exitSpectatorMode() { spectatorMode = false; spectatorData = null; location.reload(); }
     // -------------------- FUNCIONES DE UI --------------------
     let canvas,ctx,selectedSeed=null;
-    function renderFarm(){ if(!canvas) return; const size=localState.landSize, cellW=canvas.width/size, cellH=canvas.height/size; ctx.clearRect(0,0,canvas.width,canvas.height); for(let i=0;i<size;i++) for(let j=0;j<size;j++){ ctx.fillStyle="#8B5A2B"; ctx.fillRect(i*cellW,j*cellH,cellW-1,cellH-1); const crop=localState.crops.find(c=>c.x===i && c.y===j); if(crop){ const emoji=CROPS[crop.seedId].emoji; let color=crop.etapa==="brote"?"#a9d08e":crop.etapa==="crecimiento"?"#6aa84f":crop.etapa==="maduro"?"#f1c232":"#ffd966"; ctx.fillStyle=color; ctx.fillRect(i*cellW+2,j*cellH+2,cellW-4,cellH-4); ctx.font=`${cellW*0.5}px sans-serif`; ctx.fillStyle="#2c2c2c"; ctx.fillText(emoji,i*cellW+cellW*0.2,j*cellH+cellH*0.7); } else { ctx.fillStyle="#c27e3a"; ctx.fillRect(i*cellW+2,j*cellH+2,cellW-4,cellH-4); } } }
+    
     function safeGetElement(id) {
-        const el = document.getElementById(id);
-        if (!el) console.warn(`Elemento no encontrado: ${id}`);
-        return el;
+        try {
+            const el = document.getElementById(id);
+            if (!el) {
+                // Elemento no encontrado - puede que el panel no esté visible
+                return null;
+            }
+            return el;
+        } catch (e) {
+            console.warn(`Error al obtener elemento ${id}:`, e);
+            return null;
+        }
     }
     
+    function safeSetInnerText(id, value) {
+        const el = safeGetElement(id);
+        if (el) el.innerText = value;
+    }
+    
+    function safeSetInnerHTML(id, value) {
+        const el = safeGetElement(id);
+        if (el) el.innerHTML = value;
+    }
+    
+    function safeAddEventListener(id, event, handler) {
+        const el = safeGetElement(id);
+        if (el) el.addEventListener(event, handler);
+    }
+    
+    function renderFarm(){ if(!canvas) return; const size=localState.landSize, cellW=canvas.width/size, cellH=canvas.height/size; ctx.clearRect(0,0,canvas.width,canvas.height); for(let i=0;i<size;i++) for(let j=0;j<size;j++){ ctx.fillStyle="#8B5A2B"; ctx.fillRect(i*cellW,j*cellH,cellW-1,cellH-1); const crop=localState.crops.find(c=>c.x===i && c.y===j); if(crop){ const emoji=CROPS[crop.seedId].emoji; let color=crop.etapa==="brote"?"#a9d08e":crop.etapa==="crecimiento"?"#6aa84f":crop.etapa==="maduro"?"#f1c232":"#ffd966"; ctx.fillStyle=color; ctx.fillRect(i*cellW+2,j*cellH+2,cellW-4,cellH-4); ctx.font=`${cellW*0.5}px sans-serif`; ctx.fillStyle="#2c2c2c"; ctx.fillText(emoji,i*cellW+cellW*0.2,j*cellH+cellH*0.7); } else { ctx.fillStyle="#c27e3a"; ctx.fillRect(i*cellW+2,j*cellH+2,cellW-4,cellH-4); } } }
+    
     function updateUI(){
+        // Elementos principales - todos verificados con safeGetElement
         const energyBar = safeGetElement("energyBar");
         const energyVal = safeGetElement("energyVal");
         const coinsEl = safeGetElement("coins");
@@ -280,6 +332,7 @@
         const dayFooterEl = safeGetElement("dayFooter");
         const streakEl = safeGetElement("streak");
         
+        // Actualizar solo si los elementos existen
         if(energyBar) energyBar.value=localState.energy;
         if(energyVal) energyVal.innerText=localState.energy;
         if(coinsEl) coinsEl.innerText=localState.coins;
@@ -307,38 +360,47 @@
         if(dayFooterEl) dayFooterEl.innerText=sharedState.day;
         if(streakEl) streakEl.innerText=localState.dailyStreak;
         
+        // Renderizar granja y actualizar paneles (ya tienen sus propias verificaciones)
         renderFarm();
-        updateSeedsUI();
-        updateInventoryUI();
-        updateAnimalsUI();
-        updateMarketUI();
-        updateVotesUI();
-        updateCraftUI();
-        updateMissionsUI();
-        updateAchievementsUI();
-        updateCoopUI();
-        updatePrestigeUI();
-        updateResearchUI();
-        updateSkillsUI();
-        updateMiningUI();
-        updateDungeonUI();
-        updateSpellsUI();
-        updateCookingUI();
-        updateGreenhouseUI();
-        updatePetsUI();
-        updateLegendaryUI();
-        updateFuturesUI();
-        updateTradeUI();
-        updateNPCQuests();
-        renderAchievementLedger();
-        updateDrainUI();
+        try { updateSeedsUI(); } catch(e) { console.warn('Error en updateSeedsUI:', e); }
+        try { updateInventoryUI(); } catch(e) { console.warn('Error en updateInventoryUI:', e); }
+        try { updateAnimalsUI(); } catch(e) { console.warn('Error en updateAnimalsUI:', e); }
+        try { updateMarketUI(); } catch(e) { console.warn('Error en updateMarketUI:', e); }
+        try { updateVotesUI(); } catch(e) { console.warn('Error en updateVotesUI:', e); }
+        try { updateCraftUI(); } catch(e) { console.warn('Error en updateCraftUI:', e); }
+        try { updateMissionsUI(); } catch(e) { console.warn('Error en updateMissionsUI:', e); }
+        try { updateAchievementsUI(); } catch(e) { console.warn('Error en updateAchievementsUI:', e); }
+        try { updateCoopUI(); } catch(e) { console.warn('Error en updateCoopUI:', e); }
+        try { updatePrestigeUI(); } catch(e) { console.warn('Error en updatePrestigeUI:', e); }
+        try { updateResearchUI(); } catch(e) { console.warn('Error en updateResearchUI:', e); }
+        try { updateSkillsUI(); } catch(e) { console.warn('Error en updateSkillsUI:', e); }
+        try { updateMiningUI(); } catch(e) { console.warn('Error en updateMiningUI:', e); }
+        try { updateDungeonUI(); } catch(e) { console.warn('Error en updateDungeonUI:', e); }
+        try { updateSpellsUI(); } catch(e) { console.warn('Error en updateSpellsUI:', e); }
+        try { updateCookingUI(); } catch(e) { console.warn('Error en updateCookingUI:', e); }
+        try { updateGreenhouseUI(); } catch(e) { console.warn('Error en updateGreenhouseUI:', e); }
+        try { updatePetsUI(); } catch(e) { console.warn('Error en updatePetsUI:', e); }
+        try { updateLegendaryUI(); } catch(e) { console.warn('Error en updateLegendaryUI:', e); }
+        try { updateFuturesUI(); } catch(e) { console.warn('Error en updateFuturesUI:', e); }
+        try { updateTradeUI(); } catch(e) { console.warn('Error en updateTradeUI:', e); }
+        try { updateNPCQuests(); } catch(e) { console.warn('Error en updateNPCQuests:', e); }
+        try { renderAchievementLedger(); } catch(e) { console.warn('Error en renderAchievementLedger:', e); }
+        try { updateDrainUI(); } catch(e) { console.warn('Error en updateDrainUI:', e); }
     }
     function updateSeedsUI(){ let container=document.getElementById("seedsList"); if(!container) return; container.innerHTML=""; for(let [seed,qty] of Object.entries(localState.seeds)) if(qty>0){ let div=document.createElement("div"); div.className="card"; div.innerHTML=`<div class="emoji-big">${CROPS[seed]?.emoji||"🌱"}</div><div>${seed}</div><div>${qty}</div>`; div.onclick=()=>{ selectedSeed=seed; alert(`${seed} seleccionada`); }; container.appendChild(div); } let selectA=document.getElementById("cropA"), selectB=document.getElementById("cropB"); if(selectA && selectB){ let opts=localState.crops.filter(c=>c.etapa==="cosechable").map(c=>`<option value="${c.id}">${c.seedId}</option>`); selectA.innerHTML=opts.join(""); selectB.innerHTML=opts.join(""); } }
     function updateInventoryUI(){ let cropsDiv=document.getElementById("cropsList"); cropsDiv.innerHTML=""; for(let [item,qty] of Object.entries(localState.inventory)) if(CROPS[item] && qty>0){ let div=document.createElement("div"); div.className="card"; let price=sharedState.stockPrices[item]||CROPS[item].valorBase; div.innerHTML=`<div>${CROPS[item].emoji} ${item}</div><div>${qty}</div><button class="sellBtn" data-item="${item}" data-price="${price}">Vender (${price}$)</button>`; cropsDiv.appendChild(div); } document.querySelectorAll(".sellBtn").forEach(btn=>btn.onclick=()=>sellItem(btn.dataset.item,parseInt(btn.dataset.price))); let prodDiv=document.getElementById("animalProducts"); prodDiv.innerHTML=""; for(let p of ["huevo","leche","lana","huevo_pato","leche_cabra"]){ let qty=localState.inventory[p]||0; if(qty>0){ let price=sharedState.stockPrices[p]||{huevo:3,leche:5,lana:4,huevo_pato:4,leche_cabra:6}[p]; let div=document.createElement("div"); div.className="card"; let emoji={huevo:"🥚",leche:"🥛",lana:"🧶",huevo_pato:"🥚",leche_cabra:"🥛"}[p]; div.innerHTML=`<div>${emoji} ${p}</div><div>${qty}</div><button class="sellProduct" data-p="${p}" data-val="${price}">Vender (${price}$)</button>`; prodDiv.appendChild(div); } } document.querySelectorAll(".sellProduct").forEach(btn=>btn.onclick=()=>sellItem(btn.dataset.p,parseInt(btn.dataset.val))); let resDiv=document.getElementById("resourcesList"); resDiv.innerHTML=""; for(let r of ["madera","piedra","pasto","fertilizante"]){ let qty=localState.inventory[r]||0; if(qty>0) resDiv.innerHTML+=`<div class="card">${r} ${qty}</div>`; } let fishDiv=document.getElementById("fishList"); fishDiv.innerHTML=""; for(let f of ["pescado_comun","pescado_grande","pescado_dorado"]){ let qty=localState.inventory[f]||0; if(qty>0) fishDiv.innerHTML+=`<div class="card">🐟 ${f} ${qty}</div>`; } let honeyDiv=document.getElementById("honeyList"); honeyDiv.innerHTML=`<div class="card">🍯 Miel: ${localState.inventory.miel||0}</div>`; let invLegDiv=document.getElementById("invLegendaryCards"); invLegDiv.innerHTML=localState.legendaryCards.map(c=>{ let card=LEGENDARY_CARDS.find(l=>l.id===c); return `<div class="card legendary">${card?.emoji} ${card?.name}</div>`; }).join(""); let oreDiv=document.getElementById("oreList"); oreDiv.innerHTML=`<div>⛏️ Cobre: ${localState.ores.copper||0}</div><div>⚙️ Hierro: ${localState.ores.iron||0}</div><div>🌟 Oro: ${localState.ores.gold||0}</div>`; let foodDiv=document.getElementById("foodList"); foodDiv.innerHTML=""; for(let f of Object.keys(RECIPES_COOKING)){ let qty=localState.inventory[f]||0; if(qty>0) foodDiv.innerHTML+=`<div class="card">${RECIPES_COOKING[f].emoji} ${f} x${qty} <button class="eatFood" data-food="${f}">Comer</button></div>`; } document.querySelectorAll(".eatFood").forEach(btn=>btn.onclick=()=>eatFood(btn.dataset.food)); document.getElementById("essenceList").innerHTML=`🔮 Esencia mágica: ${localState.essence||0}`; }
     function updateAnimalsUI(){ let chickenDiv=document.getElementById("chickensList"), cowDiv=document.getElementById("cowsList"), sheepDiv=document.getElementById("sheepList"), ducksDiv=document.getElementById("ducksList"), goatsDiv=document.getElementById("goatsList"); if(!chickenDiv) return; chickenDiv.innerHTML=""; cowDiv.innerHTML=""; sheepDiv.innerHTML=""; ducksDiv.innerHTML=""; goatsDiv.innerHTML=""; localState.animals.forEach((a,idx)=>{ let card=document.createElement("div"); card.className="card"; card.innerHTML=`<div>${ANIMALS[a.type].emoji} ${a.type}</div><button class="feedBtn" data-idx="${idx}">🍃 Alimentar</button><button class="collectBtn" data-idx="${idx}">📦 Recoger</button>`; if(a.type==="chicken") chickenDiv.appendChild(card); else if(a.type==="cow") cowDiv.appendChild(card); else if(a.type==="sheep") sheepDiv.appendChild(card); else if(a.type==="duck") ducksDiv.appendChild(card); else if(a.type==="goat") goatsDiv.appendChild(card); }); document.querySelectorAll(".feedBtn").forEach(btn=>btn.onclick=()=>feedAnimal(parseInt(btn.dataset.idx))); document.querySelectorAll(".collectBtn").forEach(btn=>btn.onclick=()=>collectProduct(parseInt(btn.dataset.idx))); document.getElementById("breedAnimalsBtn").onclick=breedAnimals; }
     function updateMarketUI(){ let shopDiv=document.getElementById("shopSeeds"); shopDiv.innerHTML=""; for(let [seed,data] of Object.entries(CROPS)){ let price=Math.floor(data.precioSemilla*(sharedState.stockPrices[seed]||1)); let btn=document.createElement("button"); btn.innerText=`${data.emoji} ${seed} (${price}$)`; btn.onclick=()=>buySeed(seed); shopDiv.appendChild(btn); } let stockDiv=document.getElementById("stockPrices"); stockDiv.innerHTML="<b>Precios:</b> "+Object.entries(sharedState.stockPrices).slice(0,6).map(([k,v])=>`${k}:${v}$`).join(", "); let offersDiv=document.getElementById("offersList"); offersDiv.innerHTML=""; sharedState.mercado.forEach(o=>{ let div=document.createElement("div"); div.className="offer"; div.innerHTML=`<span>${o.fromUserId.slice(0,6)}: ${o.offerItem} x${o.cantidadOffer} ↔️ ${o.wantItem} x${o.cantidadWant}</span><button class="acceptOff" data-id="${o.id}">Aceptar</button>`; offersDiv.appendChild(div); }); document.querySelectorAll(".acceptOff").forEach(btn=>btn.onclick=()=>acceptOffer(parseInt(btn.dataset.id))); document.getElementById("newOfferBtn").onclick=()=>{ let offer=prompt("Ofreces (item:cantidad ej: trigo:2)"), want=prompt("Quieres (item:cantidad)"); if(offer && want){ let [offItem,offQ]=offer.split(":"); let [wantItem,wantQ]=want.split(":"); offQ=parseInt(offQ)||1; wantQ=parseInt(wantQ)||1; if(localState.inventory[offItem]>=offQ) publishOffer(offItem,wantItem,offQ,wantQ); else alert("No tienes suficiente"); } }; document.getElementById("rateUserBtn").onclick=()=>{ let uid=prompt("ID a calificar"); let positiva=confirm("¿Positiva?"); broadcastShared({ calificaciones:[...sharedState.calificaciones,{ from:localState.userId, to:uid, positiva, timestamp:Date.now() }] }); updateReputation(); }; let blackDiv=document.getElementById("blackMarket"); blackDiv.innerHTML=""; if(sharedState.blackMarket){ sharedState.blackMarket.forEach((item,idx)=>{ blackDiv.innerHTML+=`<div class="card">🖤 ${item.name} - ${item.price}$ <button class="buyBlack" data-idx="${idx}">Comprar</button></div>`; }); document.querySelectorAll(".buyBlack").forEach(btn=>btn.onclick=()=>buyBlackMarket(parseInt(btn.dataset.idx))); } document.getElementById("refreshBlackMarketBtn").onclick=generateBlackMarket; document.getElementById("manipulateMarketBtn").onclick=manipulateMarket; }
     function updateFuturesUI(){ let div=document.getElementById("futuresList"); div.innerHTML=""; for(let f of sharedState.futures){ if(f.userId===localState.userId){ div.innerHTML+=`<div class="future-item">📈 ${f.crop} ${f.direction==="up"?"⬆️":"⬇️"} - expira en ${Math.max(0,Math.round((f.expires-Date.now())/60000))} min</div>`; } } document.getElementById("buyFutureBtn").onclick=buyFuture; }
-    function updateSkillsUI(){ let div=document.getElementById("skillsTree"); div.innerHTML=""; for(let s of SKILLS){ div.innerHTML+=`<div>📚 ${s} nivel ${localState.skills[s]} <button class="upSkill" data-skill="${s}">Mejorar (100$)</button></div>`; } document.querySelectorAll(".upSkill").forEach(btn=>btn.onclick=()=>upgradeSkill(btn.dataset.skill)); }
+    function updateSkillsUI(){ 
+        const div = safeGetElement("skillsTree");
+        if(!div) return;
+        div.innerHTML=""; 
+        for(let s of SKILLS){ 
+            div.innerHTML+=`<div>📚 ${s} nivel ${localState.skills[s]} <button class="upSkill" data-skill="${s}">Mejorar (100$)</button></div>`; 
+        } 
+        document.querySelectorAll(".upSkill").forEach(btn=>btn.onclick=()=>upgradeSkill(btn.dataset.skill)); 
+    }
     function updateMiningUI(){ 
         const mineStatus = safeGetElement("mineStatus");
         const pickaxeLevel = safeGetElement("pickaxeLevel");
@@ -363,26 +425,134 @@
         if(dungeonBtn) dungeonBtn.onclick=exploreDungeon;
         if(upgradeSwordBtn) upgradeSwordBtn.onclick=upgradeSword;
     }
-    function updateSpellsUI(){ let div=document.getElementById("spellsList"); div.innerHTML=""; for(let s of SPELLS){ div.innerHTML+=`<div class="card">${s.emoji} ${s.name} (${s.cost} esencia) <button class="castSpell" data-id="${s.id}">Lanzar</button></div>`; } document.querySelectorAll(".castSpell").forEach(btn=>btn.onclick=()=>castSpell(btn.dataset.id)); }
-    function updateCookingUI(){ let div=document.getElementById("recipesList"); div.innerHTML=""; for(let [rid,recipe] of Object.entries(RECIPES_COOKING)){ div.innerHTML+=`<div class="card">${recipe.emoji} ${rid} <button class="cookBtn" data-recipe="${rid}">Cocinar</button></div>`; } document.querySelectorAll(".cookBtn").forEach(btn=>btn.onclick=()=>cook(btn.dataset.recipe)); }
+    function updateSpellsUI(){ 
+        const div = safeGetElement("spellsList");
+        if(!div) return;
+        div.innerHTML=""; 
+        for(let s of SPELLS){ 
+            div.innerHTML+=`<div class="card">${s.emoji} ${s.name} (${s.cost} esencia) <button class="castSpell" data-id="${s.id}">Lanzar</button></div>`; 
+        } 
+        document.querySelectorAll(".castSpell").forEach(btn=>btn.onclick=()=>castSpell(btn.dataset.id)); 
+    }
+    function updateCookingUI(){ 
+        const div = safeGetElement("recipesList");
+        if(!div) return;
+        div.innerHTML=""; 
+        for(let [rid,recipe] of Object.entries(RECIPES_COOKING)){ 
+            div.innerHTML+=`<div class="card">${recipe.emoji} ${rid} <button class="cookBtn" data-recipe="${rid}">Cocinar</button></div>`; 
+        } 
+        document.querySelectorAll(".cookBtn").forEach(btn=>btn.onclick=()=>cook(btn.dataset.recipe)); 
+    }
     function updateGreenhouseUI(){ let div=document.getElementById("greenhouseInfo"); if(localState.greenhouse){ div.innerHTML=`🌿 Invernadero nivel ${localState.greenhouseLevel} (+${localState.greenhouseLevel*25}% producción).`; }else{ div.innerHTML=`<button id="buyGreenhouseBtn">Construir invernadero (500$)</button>`; document.getElementById("buyGreenhouseBtn")?.addEventListener("click",buyGreenhouse); } document.getElementById("upgradeGreenhouseBtn")?.addEventListener("click",upgradeGreenhouse); }
     function updatePetsUI(){ let shopDiv=document.getElementById("petsShop"); shopDiv.innerHTML=""; for(let p of PETS){ if(localState.pet!==p.id){ let btn=document.createElement("button"); btn.innerText=`${p.emoji} ${p.name} (${p.costo}$) - ${p.efecto}`; btn.onclick=()=>buyPet(p.id); shopDiv.appendChild(btn); } } document.getElementById("activePet").innerHTML=localState.pet?`Mascota activa: ${PETS.find(p=>p.id===localState.pet)?.emoji} ${PETS.find(p=>p.id===localState.pet)?.name}`:"No tienes mascota"; }
     function buyPet(petId){ let pet=PETS.find(p=>p.id===petId); if(!pet) return; if(localState.coins<pet.costo) return; localState.coins-=pet.costo; localState.pet=petId; saveLocal(); updateUI(); alert(`¡Has adoptado un ${pet.name}!`); }
     function updateLegendaryUI(){ let div=document.getElementById("legendaryCards"); div.innerHTML=localState.legendaryCards.map(c=>{ let card=LEGENDARY_CARDS.find(l=>l.id===c); return `<div class="card legendary">${card?.emoji} ${card?.name}<br><small>${card?.efecto}</small></div>`; }).join(""); }
-    function updateTradeUI(){ let div=document.getElementById("tradeRoutes"); div.innerHTML=`<button id="startTradeBtn">🚛 Nueva ruta (100$)</button><div id="activeRoutes"></div>`; document.getElementById("startTradeBtn").onclick=startTradeRoute; let routesDiv=document.getElementById("activeRoutes"); routesDiv.innerHTML=""; for(let r of sharedState.tradeRoutes){ if(r.userId===localState.userId && r.arrival>Date.now()) routesDiv.innerHTML+=`<div class="trade-item">Ruta: ${r.product} x${r.quantity} llega en ${Math.round((r.arrival-Date.now())/60000)} min</div>`; } }
+    function updateTradeUI(){ 
+        const div = safeGetElement("tradeRoutes");
+        if(!div) return;
+        div.innerHTML=`<button id="startTradeBtn">🚛 Nueva ruta (100$)</button><div id="activeRoutes"></div>`; 
+        const startBtn = safeGetElement("startTradeBtn");
+        if(startBtn) startBtn.onclick=startTradeRoute;
+        const routesDiv = safeGetElement("activeRoutes");
+        if(routesDiv) {
+            routesDiv.innerHTML=""; 
+            for(let r of sharedState.tradeRoutes){ 
+                if(r.userId===localState.userId && r.arrival>Date.now()) 
+                    routesDiv.innerHTML+=`<div class="trade-item">Ruta: ${r.product} x${r.quantity} llega en ${Math.round((r.arrival-Date.now())/60000)} min</div>`; 
+            }
+        }
+    }
     function startTradeRoute(){ if(localState.coins<100) return; localState.coins-=100; let route={ id:Date.now(), userId:localState.userId, product:"trigo", quantity:10, departure:Date.now(), arrival:Date.now()+3600000, reward:150 }; broadcastShared({ tradeRoutes:[...sharedState.tradeRoutes, route] }); saveLocal(); updateUI(); }
     function updateMissionsUI(){ let div=document.getElementById("dailyMissions"); div.innerHTML=""; for(let m of localState.misiones){ div.innerHTML+=`<div class="mission-item">📌 ${m.tipo}: ${m.progreso}/${m.objetivo} ${m.completada?"✅":"⏳"} +${m.recompensa.coins}$ +${m.recompensa.xp}xp</div>`; } let globalDiv=document.getElementById("globalChallenges"); globalDiv.innerHTML=""; for(let ch of sharedState.globalChallenges){ if(ch.activa) globalDiv.innerHTML+=`<div class="mission-item">🌍 ${ch.name}: ${ch.progreso}/${ch.objetivo} - Recompensa: ${ch.recompensa.coins}$ +${ch.recompensa.xp}xp</div>`; } let festivalDiv=document.getElementById("eventCalendar"); festivalDiv.innerHTML=sharedState.day%7===0?"🎉 ¡Hoy es festival!":"Próximo festival en "+(7-(sharedState.day%7))+" días"; }
     function updateAchievementsUI(){ let div=document.getElementById("achievementsList"); div.innerHTML=""; let achNames={ firstHarvest:"Primera cosecha", animalLover:"Amante de animales", richFarmer:"Rico granjero", genius:"Genio genético", fisherman:"Pescador", beekeeper:"Apicultor", dungeonMaster:"Señor de las mazmorras", miner:"Minero experto" }; for(let [id,name] of Object.entries(achNames)){ let unlocked=localState.logros.includes(id); div.innerHTML+=`<div class="achievement-item">${unlocked?"🏆":"🔒"} ${name}</div>`; } }
     function updateNPCQuests(){ let div=document.getElementById("npcQuests"); div.innerHTML=""; for(let q of localState.npcQuests){ if(!q.completada){ div.innerHTML+=`<div class="quest-item">❓ ${q.desc} - Recompensa: ${q.recompensa.coins}$ +${q.recompensa.xp}xp <button class="completeQuest" data-id="${q.id}">Entregar</button></div>`; } } document.querySelectorAll(".completeQuest").forEach(btn=>btn.onclick=()=>{ let q=localState.npcQuests.find(qq=>qq.id===btn.dataset.id); if(q){ let ok=true; for(let [item,cant] of Object.entries(q.requerido)) if((localState.inventory[item]||0)<cant) ok=false; if(ok){ for(let [item,cant] of Object.entries(q.requerido)) localState.inventory[item]-=cant; localState.coins+=q.recompensa.coins; addXP(q.recompensa.xp); q.completada=true; saveLocal(); updateUI(); alert("Misión completada!"); }else alert("Faltan recursos"); } }); }
-    function updateCoopUI(){ let coop=sharedState.cooperativas.find(c=>c.id===localState.coopId); let infoDiv=document.getElementById("coopInfo"), membersDiv=document.getElementById("coopMembers"), raidStatus=document.getElementById("raidStatus"); if(coop){ infoDiv.innerHTML=`<b>${coop.nombre}</b> dueño:${coop.owner.slice(0,6)}`; membersDiv.innerHTML=`Miembros: ${coop.miembros.map(m=>m.slice(0,6)).join(", ")}`; }else{ infoDiv.innerHTML="Sin cooperativa"; membersDiv.innerHTML=""; } if(sharedState.raidActive && sharedState.raidActive.coopId===localState.coopId){ raidStatus.innerHTML=`⚔️ Incursión: HP ${sharedState.raidActive.hp}/${sharedState.raidActive.maxHp} <button id="attackBtn">⚡ Atacar</button>`; setTimeout(()=>{ let btn=document.getElementById("attackBtn"); if(btn) btn.onclick=attackRaid; },100); }else{ raidStatus.innerHTML=""; } document.getElementById("createCoopBtn").onclick=()=>{ let nom=prompt("Nombre cooperativa"); if(nom) createCoop(nom); }; document.getElementById("joinCoopBtn").onclick=()=>{ let id=prompt("ID cooperativa"); if(id) joinCoop(id); }; document.getElementById("raidBtn").onclick=startRaid; document.getElementById("coopBankBtn").onclick=()=>{ alert(`Banco cooperativo: ${sharedState.coopBank}$`); }; }
+    function updateCoopUI(){ 
+        const coop=sharedState.cooperativas.find(c=>c.id===localState.coopId); 
+        const infoDiv = safeGetElement("coopInfo");
+        const membersDiv = safeGetElement("coopMembers");
+        const raidStatus = safeGetElement("raidStatus");
+        
+        if(infoDiv) {
+            infoDiv.innerHTML=coop?`<b>${coop.nombre}</b> dueño:${coop.owner.slice(0,6)}`:"Sin cooperativa";
+        }
+        if(membersDiv) {
+            membersDiv.innerHTML=coop?`Miembros: ${coop.miembros.map(m=>m.slice(0,6)).join(", ")}`:"";
+        }
+        
+        if(sharedState.raidActive && sharedState.raidActive.coopId===localState.coopId && raidStatus){
+            raidStatus.innerHTML=`⚔️ Incursión: HP ${sharedState.raidActive.hp}/${sharedState.raidActive.maxHp} <button id="attackBtn">⚡ Atacar</button>`; 
+            setTimeout(()=>{ 
+                const btn=safeGetElement("attackBtn"); 
+                if(btn) btn.onclick=attackRaid; 
+            },100); 
+        }else if(raidStatus){
+            raidStatus.innerHTML=""; 
+        }
+        
+        const createBtn = safeGetElement("createCoopBtn");
+        const joinBtn = safeGetElement("joinCoopBtn");
+        const raidBtn = safeGetElement("raidBtn");
+        const bankBtn = safeGetElement("coopBankBtn");
+        
+        if(createBtn) createBtn.onclick=()=>{ let nom=prompt("Nombre cooperativa"); if(nom) createCoop(nom); };
+        if(joinBtn) joinBtn.onclick=()=>{ let id=prompt("ID cooperativa"); if(id) joinCoop(id); };
+        if(raidBtn) raidBtn.onclick=startRaid;
+        if(bankBtn) bankBtn.onclick=()=>{ alert(`Banco cooperativo: ${sharedState.coopBank}$`); };
+    }
     function createCoop(nombre){ const id=Date.now().toString(); const nueva={ id, nombre, owner:localState.userId, miembros:[localState.userId], recursosCompartidos:{} }; broadcastShared({ cooperativas:[...sharedState.cooperativas, nueva] }); localState.coopId=id; saveLocal(); updateCoopUI(); }
     function joinCoop(coopId){ const coop=sharedState.cooperativas.find(c=>c.id===coopId); if(!coop) return; if(!coop.miembros.includes(localState.userId)){ coop.miembros.push(localState.userId); broadcastShared({ cooperativas:[...sharedState.cooperativas] }); localState.coopId=coopId; saveLocal(); updateCoopUI(); } }
     function startRaid(){ if(!localState.coopId) return; if(sharedState.raidActive) return; const raid={ id:Date.now(), coopId:localState.coopId, hp:100, maxHp:100, participants:[], startedBy:localState.userId, endsAt:Date.now()+3600000 }; broadcastShared({ raidActive:raid }); alert("Incursión iniciada"); }
     function attackRaid(){ if(!sharedState.raidActive || sharedState.raidActive.coopId!==localState.coopId) return; if(sharedState.raidActive.hp<=0) return; let dmg=Math.floor(Math.random()*15)+5+localState.swordLevel*2; sharedState.raidActive.hp-=dmg; if(sharedState.raidActive.hp<=0){ alert("Incursión completada! +50$ y 100XP"); localState.coins+=50; addXP(100); broadcastShared({ raidActive:null }); }else{ broadcastShared({ raidActive:sharedState.raidActive }); } updateCoopUI(); }
-    function updateVotesUI(){ let votesDiv=document.getElementById("votesList"); votesDiv.innerHTML=""; sharedState.votaciones.forEach(v=>{ if(v.estado!=="activa") return; let div=document.createElement("div"); div.className="vote-item"; div.innerHTML=`<b>${v.tipo}</b> por ${v.propuestoPor.slice(0,6)}<br>✅ ${v.votosSi.length} ❌ ${v.votosNo.length}<br><button class="voteSi" data-id="${v.id}">Sí</button> <button class="voteNo" data-id="${v.id}">No</button>`; votesDiv.appendChild(div); }); document.querySelectorAll(".voteSi").forEach(btn=>btn.onclick=()=>voteOn(parseInt(btn.dataset.id),true)); document.querySelectorAll(".voteNo").forEach(btn=>btn.onclick=()=>voteOn(parseInt(btn.dataset.id),false)); document.getElementById("proposeEventBtn").onclick=proposeWeather; }
+    function updateVotesUI(){ 
+        const votesDiv = safeGetElement("votesList");
+        if(!votesDiv) return;
+        votesDiv.innerHTML=""; 
+        sharedState.votaciones.forEach(v=>{ 
+            if(v.estado!=="activa") return; 
+            let div=document.createElement("div"); 
+            div.className="vote-item"; 
+            div.innerHTML=`<b>${v.tipo}</b> por ${v.propuestoPor.slice(0,6)}<br>✅ ${v.votosSi.length} ❌ ${v.votosNo.length}<br><button class="voteSi" data-id="${v.id}">Sí</button> <button class="voteNo" data-id="${v.id}">No</button>`; 
+            votesDiv.appendChild(div); 
+        }); 
+        document.querySelectorAll(".voteSi").forEach(btn=>btn.onclick=()=>voteOn(parseInt(btn.dataset.id),true)); 
+        document.querySelectorAll(".voteNo").forEach(btn=>btn.onclick=()=>voteOn(parseInt(btn.dataset.id),false)); 
+        const proposeBtn = safeGetElement("proposeEventBtn");
+        if(proposeBtn) proposeBtn.onclick=proposeWeather; 
+    }
     function proposeWeather(){ const tipos=["lluvia","sequia","plaga","tormenta"]; const tipo=tipos[Math.floor(Math.random()*tipos.length)]; const nueva={ id:Date.now(), tipo, propuestoPor:localState.userId, votosSi:[], votosNo:[], estado:"activa", endsAt:Date.now()+1000*60*15 }; broadcastShared({ votaciones:[...sharedState.votaciones, nueva] }); }
     function voteOn(voteId,votoSi){ const idx=sharedState.votaciones.findIndex(v=>v.id===voteId); if(idx===-1) return; const v=sharedState.votaciones[idx]; if(v.estado!=="activa") return; if(v.votosSi.includes(localState.userId)||v.votosNo.includes(localState.userId)) return; if(votoSi) v.votosSi.push(localState.userId); else v.votosNo.push(localState.userId); const total=v.votosSi.length+v.votosNo.length; if(total>=3 && v.votosSi.length>v.votosNo.length){ v.estado="aprobada"; broadcastShared({ climaGlobal:v.tipo, climaExpira:Date.now()+3600000*2, votaciones:sharedState.votaciones.filter(vv=>vv.id!==voteId) }); }else if(total>=3 && v.votosNo.length>=v.votosSi.length){ v.estado="rechazada"; broadcastShared({ votaciones:sharedState.votaciones.filter(vv=>vv.id!==voteId) }); }else{ broadcastShared({ votaciones:[...sharedState.votaciones] }); } }
-    function updateCraftUI(){ let craftDiv=document.getElementById("craftRecipes"); craftDiv.innerHTML=""; let recipes={ "aspersor":{ cost:{ madera:3, piedra:2 } }, "espantapajaros":{ cost:{ madera:2, pasto:1 } }, "riego_goteo":{ cost:{ madera:5, piedra:3, fertilizante:2 } }, "establo_mejorado":{ cost:{ madera:8, piedra:5 } } }; for(let [item,receta] of Object.entries(recipes)){ let btn=document.createElement("button"); btn.innerText=`🔨 ${item} (${JSON.stringify(receta.cost)})`; btn.onclick=()=>{ for(let [res,cant] of Object.entries(receta.cost)) if((localState.inventory[res]||0)<cant){ alert(`Falta ${res}`); return; } for(let [res,cant] of Object.entries(receta.cost)) localState.inventory[res]-=cant; localState.mejoras.push(item); saveLocal(); updateUI(); alert(`${item} creado!`); }; craftDiv.appendChild(btn); } document.getElementById("ownedUpgrades").innerHTML=`Mejoras: ${localState.mejoras.join(", ")||"ninguna"}`; document.getElementById("buyBeehiveBtn").onclick=()=>{ if(localState.coins>=50){ localState.coins-=50; localState.beehives++; saveLocal(); updateUI(); } }; document.getElementById("buySprinklerBtn").onclick=()=>{ if(localState.coins>=100){ localState.coins-=100; localState.sprinklers++; saveLocal(); updateUI(); } }; document.getElementById("sprinklersCount").innerHTML=`Aspersores: ${localState.sprinklers}`; }
+    function updateCraftUI(){ 
+        const craftDiv = safeGetElement("craftRecipes");
+        if(!craftDiv) return;
+        craftDiv.innerHTML=""; 
+        let recipes={ "aspersor":{ cost:{ madera:3, piedra:2 } }, "espantapajaros":{ cost:{ madera:2, pasto:1 } }, "riego_goteo":{ cost:{ madera:5, piedra:3, fertilizante:2 } }, "establo_mejorado":{ cost:{ madera:8, piedra:5 } } }; 
+        for(let [item,receta] of Object.entries(recipes)){ 
+            let btn=document.createElement("button"); 
+            btn.innerText=`🔨 ${item} (${JSON.stringify(receta.cost)})`; 
+            btn.onclick=()=>{ 
+                for(let [res,cant] of Object.entries(receta.cost)) 
+                    if((localState.inventory[res]||0)<cant){ alert(`Falta ${res}`); return; } 
+                for(let [res,cant] of Object.entries(receta.cost)) localState.inventory[res]-=cant; 
+                localState.mejoras.push(item); 
+                saveLocal(); 
+                updateUI(); 
+                alert(`${item} creado!`); 
+            }; 
+            craftDiv.appendChild(btn); 
+        }
+        
+        const ownedUpgrades = safeGetElement("ownedUpgrades");
+        if(ownedUpgrades) ownedUpgrades.innerHTML=`Mejoras: ${localState.mejoras.join(", ")||"ninguna"}`;
+        
+        const buyBeehiveBtn = safeGetElement("buyBeehiveBtn");
+        if(buyBeehiveBtn) buyBeehiveBtn.onclick=()=>{ if(localState.coins>=50){ localState.coins-=50; localState.beehives++; saveLocal(); updateUI(); } };
+        
+        const buySprinklerBtn = safeGetElement("buySprinklerBtn");
+        if(buySprinklerBtn) buySprinklerBtn.onclick=()=>{ if(localState.coins>=100){ localState.coins-=100; localState.sprinklers++; saveLocal(); updateUI(); } };
+        
+        const sprinklersCount = safeGetElement("sprinklersCount");
+        if(sprinklersCount) sprinklersCount.innerHTML=`Aspersores: ${localState.sprinklers}`;
+    }
     function updateResearchUI(){ let div=document.getElementById("researchTree"); div.innerHTML=""; for(let r of RESEARCH){ let unlocked=localState.researchUnlocked.includes(r.id); div.innerHTML+=`<div class="research-node">${r.name} - ${r.effect} ${unlocked?"✅":`<button class="unlockRes" data-id="${r.id}">Desbloquear (${r.cost}$)</button>`}</div>`; } document.querySelectorAll(".unlockRes").forEach(btn=>btn.onclick=()=>unlockResearch(btn.dataset.id)); }
     function unlockResearch(resId){ let res=RESEARCH.find(r=>r.id===resId); if(!res || localState.researchUnlocked.includes(resId)) return; if(localState.coins<res.cost) return; localState.coins-=res.cost; localState.researchUnlocked.push(resId); saveLocal(); updateUI(); alert(`Investigación ${res.name} desbloqueada: ${res.effect}`); }
     function updatePrestigeUI(){ 
