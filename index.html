@@ -360,8 +360,12 @@
         if(dayFooterEl) dayFooterEl.innerText=sharedState.day;
         if(streakEl) streakEl.innerText=localState.dailyStreak;
         
-        // Renderizar granja y actualizar paneles (ya tienen sus propias verificaciones)
-        renderFarm();
+        // Renderizar granja solo si canvas y ctx están disponibles
+        if(typeof canvas !== 'undefined' && canvas && typeof ctx !== 'undefined' && ctx) {
+            renderFarm();
+        }
+        
+        // Actualizar paneles (ya tienen sus propias verificaciones)
         try { updateSeedsUI(); } catch(e) { console.warn('Error en updateSeedsUI:', e); }
         try { updateInventoryUI(); } catch(e) { console.warn('Error en updateInventoryUI:', e); }
         try { updateAnimalsUI(); } catch(e) { console.warn('Error en updateAnimalsUI:', e); }
