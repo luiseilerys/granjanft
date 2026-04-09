@@ -1,0 +1,26 @@
+[webxdc_app]
+name = "CryptoCrop: Genesis"
+description = "Juego de granja con economía y drenaje - Compatible Webxdc y Navegador"
+version = "2.0.0"
+min_webxdc_version = "1.0"
+
+[manifest]
+display = "standalone"
+orientation = "portrait"
+
+[icons]
+src = "icon.png"
+sizes = "512x512"
+type = "image/png"
+
+[start_url]
+href = "index.html"
+
+[permissions]
+storage = true
+internet = false
+contacts = false
+location = false
+camera = false
+microphone = false
+notifications = true
